@@ -6,14 +6,14 @@ module "resource_group" {
 module "virtual_network" {
   source = "../ChileModule/Virtual Network"
   virtual_network = var.virtual_network
-  #resource_group = module.resource_group.rg
+  resource_group = var.resource_group
   depends_on = [module.resource_group]
 }
 
 module "kubernetes_cluster" {
   source = "../ChileModule/Kbernetes"
   kubernetes_cluster = var.kubernetes_cluster
- # resource_group = module.resource_group.rg
+  resource_group = var.resource_group
 
   depends_on = [module.virtual_network]
 }
