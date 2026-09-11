@@ -13,7 +13,7 @@ module "virtual_network" {
 module "kubernetes_cluster" {
   source = "../ChileModule/Kbernetes"
   kubernetes_cluster = var.kubernetes_cluster
-  resource_group = module.resource_group.rg
+ # resource_group = module.resource_group.rg
 
   depends_on = [module.virtual_network]
 }
