@@ -5,38 +5,60 @@ on:
     branches:
       - main
 
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  TF_WORKING_DIR: ./Terraform/RootModule
 
 jobs:
   terraform:
+    name: Terraform
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          creds: |
-            {
-              "clientId": "${{ secrets.ARM_CLIENT_ID }}",
-              "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
-              "tenantId": "${{ secrets.ARM_TENANT_ID }}",
-              "subscriptionId": "${{ secrets.ARM_SUBSCRIPTION_ID }}"
-            }
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         run: terraform init
 
+      - name: Terraform Format Check
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+
       - name: Terraform Plan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         run: terraform plan
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        environment:
+          name: production
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_TENANT_ID }}
+          ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
         run: terraform apply -auto-approve
